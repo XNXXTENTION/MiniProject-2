@@ -6,8 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Car } from 'lucide-react';
 import Link from 'next/link';
+import Counter from './components/counter' // นำเข้า Counter component
 
 
 export default function Home() {
@@ -30,6 +30,8 @@ export default function Home() {
             </Button>
           </div>
         </div>
+
+        <Counter initialLikes={999} /> 
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
