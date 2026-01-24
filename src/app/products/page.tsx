@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import ProductSearch from '@/components/product-search'
+import { api } from '@/lib/axios' // 1. Import axios instance ที่เราสร้างไว้
 
 // 1. กำหนดโครงสร้างข้อมูล (Interface) เพื่อให้ TypeScript ช่วยเช็ค error
 interface Product {
@@ -20,17 +21,32 @@ interface ProductsPageProps {
 }
 
 // 3. ฟังก์ชันดึงข้อมูลทั้งหมดจาก API (Server-side function)
-async function getProducts() {
-  // Next.js จะทำการ Caching ข้อมูลนี้ให้อัตโนมัติ
-  const res = await fetch('https://backend.codingthailand.com/v2/products');
+// async function getProducts() {
+//   // Next.js จะทำการ Caching ข้อมูลนี้ให้อัตโนมัติ
+//   const res = await fetch('https://backend.codingthailand.com/v2/products');
 
-  if (!res.ok) {
-    // ถ้า API พัง Next.js จะไปเรียกหน้า error.tsx มาแสดงแทน
-    throw new Error('Failed to fetch products')
+//   if (!res.ok) {
+//     // ถ้า API พัง Next.js จะไปเรียกหน้า error.tsx มาแสดงแทน
+//     throw new Error('Failed to fetch products')
+//   }
+
+//   const data = await res.json()
+//   return data as Product[]
+// }
+
+async function getProducts() { 
+  try {
+    // 2. ใช้ api.get แทน fetch 
+    // สังเกตว่าไม่ต้องใส่ URL เต็ม เพราะเราตั้ง baseURL ไว้แล้วใน lib/axios.ts
+    const response = await api.get<Product[]>('/products')
+    
+    // 3. Axios เก็บข้อมูลจริงไว้ใน property ชื่อ 'data'
+    return response.data 
+  } catch (error) {
+    // 4. Axios จะ throw error อัตโนมัติถ้า HTTP status ไม่ใช่ 2xx
+    // ซึ่ง Next.js จะไปเรียกไฟล์ error.tsx ที่เราสร้างไว้ให้ทำงานทันที
+    throw new Error('Failed to fetch products with Axios')
   }
-
-  const data = await res.json()
-  return data as Product[]
 }
 
 // 4. ฟังก์ชันสำหรับกรองข้อมูล (Search Logic) รันบน Server

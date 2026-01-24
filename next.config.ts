@@ -24,6 +24,12 @@ const nextConfig: NextConfig = {
         port: '',                  // เว้นว่างไว้สำหรับพอร์ตมาตรฐาน (80/443)
         pathname: '/**',           // อนุญาตทุกเส้นทาง (Path) ภายใต้ Domain นี้
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
