@@ -44,7 +44,7 @@ export default function RootLayout({
           <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur">
             <div className="container mx-auto flex h-16 items-center px-4">
               <Link href="/" className="mr-8">
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-linear-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                   NextApp
                 </span>
               </Link>
@@ -54,6 +54,7 @@ export default function RootLayout({
                 <Link href="/about" className="text-slate-600 hover:text-slate-900">เกี่ยวกับเรา</Link>
                 <Link href="/orders" className="text-slate-600 hover:text-slate-900">คำสั่งซื้อ</Link>
                 <Link href="/products" className="text-slate-600 hover:text-slate-900">สินค้า</Link>
+                <Link href="/cache-demo" className="text-slate-600 hover:text-slate-900">Cache Demo</Link>
               </nav>
             </div>
           </header>
