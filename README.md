@@ -16,7 +16,7 @@
 ## 🚀 วิธีการติดตั้งและรันโปรเจกต์
 1. ติดตั้ง Library ทั้งหมด:
    ```bash
-   https://github.com/XNXXTENTION/MiniProject-2.git
+   git clone https://github.com/XNXXTENTION/MiniProject-2.git
    npm install
    npx prisma generate
    npx prisma db push
