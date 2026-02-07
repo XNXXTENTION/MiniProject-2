@@ -1,96 +1,69 @@
-import type { Metadata } from 'next'
-import Image from 'next/image'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-
-export const metadata: Metadata = {
-  title: 'เกี่ยวกับเรา',
-  description: 'เรียนรู้เกี่ยวกับทีมงานและเทคโนโลยีที่เราใช้ในการพัฒนาเว็บแอปพลิเคชัน',
-  openGraph: {
-    title: 'เกี่ยวกับเรา | My Next.js App',
-    description: 'เรียนรู้เกี่ยวกับทีมงานและเทคโนโลยีที่เราใช้',
-  }
-}
+"use client";
+import React from 'react';
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-slate-50">
-      <div className="container mx-auto px-4 py-16">
+      {/* Hero Section */}
+      <section className="relative h-64 bg-blue-600 flex items-center justify-center text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+        <div className="relative z-10 text-center">
+          <h1 className="text-4xl font-bold mb-2">เกี่ยวกับเรา</h1>
+          <p className="text-blue-100 italic">"รสชาติแห่งความสุข ที่คุณจองได้เพียงปลายนิ้ว"</p>
+        </div>
+      </section>
+
+      {/* Content Section */}
+      <section className="container mx-auto px-4 py-12 -mt-10">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-slate-900 mb-8">เกี่ยวกับเรา</h1>
+          {/* Card 1: Story */}
+          <div className="bg-white p-8 rounded-3xl shadow-xl mb-8 border border-slate-100">
+            <h2 className="text-2xl font-bold text-blue-600 mb-4 flex items-center">
+              <span className="mr-2">🏠</span> ความเป็นมาของร้าน
+            </h2>
+            <p className="text-slate-600 leading-relaxed">
+              ร้านอาหารของเราเริ่มต้นจากความตั้งใจที่จะมอบประสบการณ์การรับประทานอาหารที่พิเศษที่สุด 
+              เราคัดสรรวัตถุดิบคุณภาพเยี่ยมจากท้องถิ่นในจังหวัดพะเยา นำมาปรุงด้วยหัวใจ 
+              เพื่อให้ทุกจานที่เสิร์ฟคือความประทับใจสำหรับคุณและคนที่คุณรัก
+            </p>
+          </div>
 
-          {/* 1. ส่วนเนื้อหาหลักและภารกิจ */}
-          <Card className="mb-12">
-            <CardHeader>
-              <CardTitle>ภารกิจของเรา</CardTitle>
-              <CardDescription>สร้างสรรค์เว็บแอปพลิเคชันที่ทันสมัยและมีคุณภาพ</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-slate-600 leading-relaxed">
-              <p>เราเชื่อว่าเว็บแอปพลิเคชันที่ดีต้องมีทั้งประสิทธิภาพและการออกแบบที่ดี ด้วย Next.js 16 เราสามารถสร้างเว็บไซต์ที่โหลดเร็ว และให้ประสบการณ์ที่ดีแก่ผู้ใช้งาน</p>
-              <p>การใช้ Tailwind CSS และ shadcn/ui ช่วยให้เราสร้าง UI ที่สวยงามและปรับแต่งได้ง่าย</p>
-            </CardContent>
-          </Card>
+          {/* Grid Section: Features */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 hover:transform hover:scale-105 transition-all">
+              <h3 className="text-xl font-semibold text-slate-800 mb-3 flex items-center">
+                <span className="mr-2">📍</span> สถานที่ตั้ง
+              </h3>
+              <p className="text-slate-500 text-sm">
+                หน้ามหาวิทยาลัยพะเยา (ประตู 1) <br />
+                ต.แม่กา อ.เมือง จ.พะเยา
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 hover:transform hover:scale-105 transition-all">
+              <h3 className="text-xl font-semibold text-slate-800 mb-3 flex items-center">
+                <span className="mr-2">⏰</span> เวลาเปิด-ปิด
+              </h3>
+              <p className="text-slate-500 text-sm">
+                เปิดให้บริการทุกวัน <br />
+                10:00 น. - 21:00 น.
+              </p>
+            </div>
+          </div>
 
-          {/* 2. ส่วนแสดงรูปภาพจาก Remote URL (Unsplash) */}
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-slate-800">มุมมองเทคโนโลยีของเรา</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* รูปภาพที่ 1: ใส่ priority เพราะอยู่ส่วนบนของหน้าจอ */}
-              <div className="relative h-72 rounded-2xl overflow-hidden shadow-lg border">
-                <Image
-                  src="https://images.unsplash.com/photo-1593642532842-98d0fd5ebc1a"
-                  alt="Laptop on desk"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover"
-                  priority // บอก Next.js ให้โหลดทันที (LCP Optimization)
-                />
+          {/* Contact Section */}
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-8 rounded-3xl shadow-xl text-white text-center">
+            <h2 className="text-2xl font-bold mb-4">สนใจจัดเลี้ยงหรือสอบถามข้อมูล</h2>
+            <div className="flex flex-wrap justify-center gap-6">
+              <div className="flex items-center">
+                <span className="mr-2">📞</span> 054-123-456
               </div>
-              
-              {/* รูปภาพที่ 2: ใช้ Lazy Load ปกติ */}
-              <div className="relative h-72 rounded-2xl overflow-hidden shadow-lg border">
-                <Image
-                  src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f"
-                  alt="Modern technology"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover"
-                />
+              <div className="flex items-center">
+                <span className="mr-2">🌐</span> www.up-restaurant.com
               </div>
             </div>
-          </section>
-
-          {/* 3. ส่วน Grid ข้อมูลเทคนิค */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader><CardTitle>เทคโนโลยีที่ใช้</CardTitle></CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-slate-700">
-                  <li className="flex items-center gap-2"><span className="text-blue-500">▪</span> Next.js 16</li>
-                  <li className="flex items-center gap-2"><span className="text-blue-500">▪</span> React Server Components</li>
-                  <li className="flex items-center gap-2"><span className="text-blue-500">▪</span> Tailwind CSS</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle>จุดเด่น</CardTitle></CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-slate-700">
-                  <li className="flex items-center gap-2"><span className="text-green-500">✓</span> ประสิทธิภาพสูง</li>
-                  <li className="flex items-center gap-2"><span className="text-green-500">✓</span> SEO-friendly</li>
-                  <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Responsive Design</li>
-                </ul>
-              </CardContent>
-            </Card>
           </div>
         </div>
-      </div>
+      </section>
     </main>
-  )
+  );
 }

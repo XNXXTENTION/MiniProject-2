@@ -1,66 +1,83 @@
-// app/layout.tsx
 import type { Metadata } from 'next'
-import { Prompt } from 'next/font/google' // นำเข้าฟอนต์จาก Google
+import { Prompt } from 'next/font/google'
 import Link from 'next/link'
 import './globals.css'
-import AppQueryProvider from './provider' // นำเข้า Provider ที่เราสร้างไว้
+import AppQueryProvider from './provider'
 
-// 1. การตั้งค่า Font (Prompt)
-export const prompt = Prompt({
+// 1. ตั้งค่าฟอนต์ Prompt เพื่อให้อ่านภาษาไทยได้สวยงาม
+const promptFont = Prompt({
   weight: ['300', '400', '500', '600', '700'],
   subsets: ['thai', 'latin'],
   display: 'swap',
   variable: '--font-prompt',
 })
 
-// 2. การตั้งค่า Metadata (SEO & Social Share)
+// 2. ปรับปรุง Metadata ให้เข้ากับโปรเจกต์ร้านอาหาร (ม.พะเยา)
 export const metadata: Metadata = {
   title: {
-    default: 'My Next.js App',
-    template: '%s | My Next.js App' // ถ้าหน้าลูกชื่อ "สินค้า" จะกลายเป็น "สินค้า | My Next.js App"
+    default: 'UP Restaurant | ระบบจองโต๊ะอาหารหน้า ม.พะเยา',
+    template: '%s | UP Restaurant' 
   },
-  description: 'เว็บแอปพลิเคชันที่สร้างด้วย Next.js 16',
+  description: 'จองโต๊ะอาหารออนไลน์ได้ง่ายๆ ตรวจสอบสถานะแบบ Real-time พัฒนาโดยนิสิตวิทยาการคอมพิวเตอร์ ม.พะเยา',
   openGraph: {
     type: 'website',
     locale: 'th_TH',
-    siteName: 'My Next.js App',
-    // ... ตั้งค่ารูปพรีวิวเวลาแชร์ลิงก์
+    siteName: 'UP Restaurant',
+    title: 'UP Restaurant - รสชาติที่จองได้เพียงปลายนิ้ว',
+    description: 'จองโต๊ะอาหารหน้า ม.พะเยา สะดวก รวดเร็ว แม่นยำ',
   }
 }
 
-// 3. Main Layout Component
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="th" className={prompt.variable}>
-      <body className={prompt.className}>
-        {/* 4. ฉีด AppQueryProvider เข้าไปในระบบ */}
+    <html lang="th" className={promptFont.variable}>
+      <body className={`${promptFont.className} bg-slate-50 text-slate-900 antialiased`}>
         <AppQueryProvider>
           
-          {/* 5. ส่วน Header (Sticky Menu) */}
-          <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur">
-            <div className="container mx-auto flex h-16 items-center px-4">
-              <Link href="/" className="mr-8">
-                <span className="text-2xl font-bold bg-linear-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                  NextApp
+          {/* ส่วน Navigation Bar (Sticky Menu) */}
+          <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md shadow-sm">
+            <div className="container mx-auto flex h-16 items-center px-4 justify-between">
+              
+              {/* Logo ส่วนหน้า ม.พะเยา */}
+              <Link href="/" className="flex items-center space-x-2">
+                <span className="text-2xl font-black bg-gradient-to-r from-blue-700 to-cyan-500 bg-clip-text text-transparent uppercase tracking-tighter">
+                  UP Restaurant
                 </span>
               </Link>
               
-              <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
-                <Link href="/" className="text-slate-600 hover:text-slate-900">หน้าหลัก</Link>
-                <Link href="/about" className="text-slate-600 hover:text-slate-900">เกี่ยวกับเรา</Link>
-                <Link href="/orders" className="text-slate-600 hover:text-slate-900">คำสั่งซื้อ</Link>
-                <Link href="/products" className="text-slate-600 hover:text-slate-900">สินค้า</Link>
-                <Link href="/cache-demo" className="text-slate-600 hover:text-slate-900">Cache Demo</Link>
+              {/* รายการเมนูนำทาง */}
+              <nav className="hidden md:flex items-center space-x-8 text-sm font-semibold text-slate-600">
+                <Link href="/" className="hover:text-blue-600 transition-colors">หน้าหลัก</Link>
+                <Link href="/seats" className="hover:text-blue-600 transition-colors">จองโต๊ะอาหาร</Link>
+                <Link href="/dashboard" className="hover:text-blue-600 transition-colors">รายการจอง</Link>
+                <Link href="/about" className="hover:text-blue-600 transition-colors">เกี่ยวกับเรา</Link>
               </nav>
+
+              {/* ปุ่มจองด่วนสำหรับมือถือ */}
+              <div className="flex items-center md:hidden">
+                <Link href="/booking" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md shadow-blue-200">
+                  จองเลย
+                </Link>
+              </div>
+
             </div>
           </header>
           
-          {/* 6. ส่วนเนื้อหาของแต่ละหน้า (Dynamic Content) */}
-          {children}
+          {/* แสดงผล Content ของแต่ละหน้า */}
+          <div className="min-h-[calc(100-4rem)]">
+            {children}
+          </div>
+
+          {/* Footer แบบสั้นๆ */}
+          <footer className="py-8 bg-white border-t border-slate-200 mt-12">
+            <div className="container mx-auto px-4 text-center text-slate-400 text-sm">
+              <p>© 2026 UP Restaurant Project - Computer Science Phayao University</p>
+            </div>
+          </footer>
           
         </AppQueryProvider>
       </body>

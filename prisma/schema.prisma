@@ -1,0 +1,22 @@
+// 1. กำหนดว่าเราจะใช้ฐานข้อมูลประเภทไหน
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db" // ระบบจะสร้างไฟล์ dev.db ให้ในโฟลเดอร์ prisma ครับ
+}
+
+// 2. กำหนดตัวสร้าง Prisma Client สำหรับใช้งานในโค้ด
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 3. โครงสร้างตาราง Booking ของคุณ (เพิ่มฟิลด์ seatNumber ตามที่ต้องการ)
+model Booking {
+  id           Int      @id @default(autoincrement())
+  customerName String
+  date         DateTime
+  time         String
+  guests       Int
+  seatNumber   String   // ฟิลด์สำหรับเก็บเลขที่นั่งเพื่อเช็คสีเขียว-แดง
+  status       String   @default("Pending")
+  createdAt    DateTime @default(now())
+}
