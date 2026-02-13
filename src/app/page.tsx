@@ -18,7 +18,7 @@ export default function HomePage() {
             พร้อมระบบจองโต๊ะที่รวดเร็วและแม่นยำที่สุดหน้า ม.พะเยา
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/booking" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all transform hover:scale-105 shadow-xl">
+            <Link href="/seats" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all transform hover:scale-105 shadow-xl">
               จองโต๊ะตอนนี้
             </Link>
             <Link href="/about" className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/30 px-8 py-4 rounded-full font-bold text-lg transition-all">
