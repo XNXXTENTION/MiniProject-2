@@ -7,10 +7,10 @@ function BookingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  //ดึงURL
+  //แปลค่า[URL]จากหน้า[seats]จากที่แล้วมาเก็บใน[seatFromUrl]
   const seatFromUrl = searchParams.get("seat") || ""; 
 
-  //สร้างเก็บข้อมูลให้ชื่อตรงกับ Database
+  //สร้างเก็บข้อมูลให้ชื่อตรงกับ[Database]เก็บค่าที่กรอก
   const [formData, setFormData] = useState({
     customerName: "",
     date: "",
@@ -19,26 +19,39 @@ function BookingForm() {
     seatNumber: seatFromUrl,
   });
 
-  //อัปเดตเลขโต๊ะในฟอร์มเมื่อ[URL]เปลี่ยนแปลง
+  //ถ้า[URL]เปลี่ยนกดเลือกโต๊ะใหม่ให้รีบอัปเดตค่าในฟอร์มทันที
+  //ชื่อโต๊ะอาจมาช้ากว่าเข้าเว็บ
   useEffect(() => {
     if (seatFromUrl) {
       setFormData((prev) => ({ ...prev, seatNumber: seatFromUrl }));
     }
   }, [seatFromUrl]);
 
-  //ฟังก์ชันสำหรับส่งข้อมูล
   const handleBooking = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault();// ป้องกันไม่ให้หน้าเว็บ Refresh เอง
 
     //ตรวจสอบวันที่ห้ามจองย้อนหลัง
-    const selectedDate = new Date(formData.date);
-    selectedDate.setHours(0, 0, 0, 0);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();// เวลาปัจจุบัน (รวมชั่วโมง/นาที)
+    const selectedDate = new Date(formData.date); //เปลี่ยนคอมพิวเตอร์สามารถคำนวณและเปรียบเทียบได้ครับ
+    const todayAtMidnight = new Date();//กำหนกให้เที่ยงคือเพราะเวลาน้อยที่สุด
 
-    if (selectedDate < today) {
+    todayAtMidnight.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);//กำหนกให้เที่ยงคือเพราะเวลาน้อยที่สุด
+
+    if (selectedDate < todayAtMidnight) {
       alert("❌ ไม่สามารถจองวันที่ย้อนหลังได้");
       return;
+    }
+
+    if (selectedDate.getTime() === todayAtMidnight.getTime()) {//เลือกวันนี้ไหม
+      const [h, m] = formData.time.split(":").map(Number);//แปลงเป็น"ชั่วโมง"และ"นาที"[16:30]และจะเปลี่ยนพวกมันให้กลายเป็นตัวเลขเพื่อเอาไปคำนวณครับ
+      const selectedTime = new Date();
+      selectedTime.setHours(h, m, 0, 0);//ตั้งเวลาให้ตรงกับที่ากรอกมา
+
+      if (selectedTime < now) {
+        alert("❌ เวลาปัจจุบันคือ " + now.toLocaleTimeString() + " คุณเลือกเวลาที่ผ่านมาแล้ว!");
+        return;
+      }
     }
 
     //ส่งข้อมูลไปยัง[API]
@@ -46,12 +59,12 @@ function BookingForm() {
       const response = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData),//แปลงก้อนข้อมูลให้กลายเป็น[String]ส่งไป[Server]
       });
 
       if (response.ok) {
         alert("✅ จองโต๊ะสำเร็จ!");
-        router.push("/dashboard");
+        router.push("/dashboard");//จองเสร็จแล้วพาไปหน้าดูรายการจองทั้งหมด
       } else {
         const result = await response.json();
         alert(`❌ ผิดพลาด: ${result.error || "จองไม่ได้"}`);
@@ -78,6 +91,8 @@ function BookingForm() {
           <input 
             type="text" 
             className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+            //onChangeดูทุกครั้งทีพิมพ์
+            //...คือcopyข้อมูล
             onChange={(e) => setFormData({...formData, customerName: e.target.value})} 
             required 
           />

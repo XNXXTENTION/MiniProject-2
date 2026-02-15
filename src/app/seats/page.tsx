@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";//โหลดหน้าและเก็บข้อมูล
+import { useRouter } from "next/navigation";//เปลี่ยนหน้า
 
 export default function SeatSelectionPage() {
   const router = useRouter();
@@ -14,28 +14,28 @@ export default function SeatSelectionPage() {
   useEffect(() => {
     async function loadSeats() {
       try {
-        const response = await fetch("/api/bookings");
-        const data = await response.json();
-        //ดึงเอาแค่เลขโต๊ะ[seatNumber]จากข้อมูลการจองทั้งหมด
-        const occupied = data.map((item: any) => item.seatNumber);
-        setBookedSeats(occupied);
+        const response = await fetch("/api/bookings");//ไปดึงข้อมูลหารจอง
+        const data = await response.json();//แปลเป็นภาษาคอม
+        const occupied = data.map((item: any) => item.seatNumber);//ดึงเอาแค่เลขโต๊ะ[seatNumber]
+        setBookedSeats(occupied);//แสดงโต๊ะที่จองแล้ว
       } catch (error) {
         console.error("Error loading seats:", error);
       }
     }
-    loadSeats();
+    loadSeats(); //รันๆ
   }, []);
 
   //สร้างเลข[โต๊ะ]
   const allSeats = ["A1", "A2", "A3", "A4", "B1", "B2", "B3", "B4", "C1", "C2", "C3", "C4"];
 
-  //ฟังก์ชันอัปเดตโต๊ะที่เลือก
-  const handleSelect = (seatName: string) => {
-    setSelectedSeat(seatName);
+  const handleSelect = (seatName: string) => { //กำลังเลือก
+    setSelectedSeat(seatName);//เมื่อคลิกเลือกโต๊ะ ให้จำค่านั้นไว้ใน selectedSeat
+    //ใช้ setSelectedSeatเพราะทำให้ ทำงานใหม่ได้ตลอด
   };
 
+  //เมื่อกดปุ่มยืนยัน
   const handleConfirm = () => {
-    if (selectedSeat) {
+    if (selectedSeat) { //ค่าจะเป็น Null
       //ส่งเลขโต๊ะไปที่หน้าจองผ่าน[URL-Parameter]
       router.push(`/booking?seat=${selectedSeat}`);
     }
@@ -48,15 +48,16 @@ export default function SeatSelectionPage() {
       
       {/*ส่วนของผังที่นั่ง*/}
       <div className="grid grid-cols-4 gap-4 mb-8">
-        {allSeats.map((seat) => {
-          const isBooked = bookedSeats.includes(seat); // เช็คว่าโต๊ะนี้จองไปยัง
-          const isSelected = selectedSeat === seat;    // เช็คว่าเราจองอันนี้อยู่ไหม
+        {allSeats.map((seat) => { //map วนสร้างปุ่ม
+          //เช็คสถานะของแต่ละโต๊ะ
+          const isBooked = bookedSeats.includes(seat); //โต๊ะนี้จองไปยัง
+          const isSelected = selectedSeat === seat;    //จองอันนี้อยู่ไหมสีปุ่ม
 
           return (
             <button
-              key={seat}
-              disabled={isBooked}
-              onClick={() => handleSelect(seat)}
+              key={seat}//แยกปุ่ม
+              disabled={isBooked}//ถ้าจองแล้ว ห้ามกด
+              onClick={() => handleSelect(seat)}//() =>รอให้คลิกก่อน 
               className={`p-4 rounded-lg font-bold transition-colors
                 ${isBooked ? "bg-gray-300 text-gray-500 cursor-not-allowed" : ""}
                 ${isSelected ? "bg-blue-500 text-white ring-2 ring-blue-800" : ""}
@@ -72,7 +73,7 @@ export default function SeatSelectionPage() {
       {/*ปุ่มยืนยัน*/}
       <button
         onClick={handleConfirm}
-        disabled={!selectedSeat}
+        disabled={!selectedSeat}//ถ้ายังไม่เลือกโต๊ะ ห้ามกด
         className={`w-full py-3 rounded-xl font-bold text-white transition-all
           ${selectedSeat ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400 cursor-not-allowed"}
         `}
