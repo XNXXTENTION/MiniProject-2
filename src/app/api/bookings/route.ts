@@ -3,13 +3,20 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// 1. [CREATE] บันทึกการจอง พร้อมเช็คที่นั่งซ้ำ
+//[POST]บันทึกข้อมูลการจองใหม่
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, date, time, guests, seatNumber } = body;
+    
+    //ดึงค่าโดยใช้ชื่อ[customerName]ให้ตรงกับหน้าบ้านและ[Schema]
+    const { customerName, date, time, guests, seatNumber } = body;
 
-    // ตรวจสอบว่าที่นั่งนี้ ในวันนี้ มีการจองไปแล้วหรือยัง
+    //ตรวจสอบเบื้องต้นว่ามีข้อมูลครบไหม
+    if (!customerName || !date || !seatNumber) {
+      return NextResponse.json({ error: "❌ ข้อมูลไม่ครบถ้วน" }, { status: 400 });
+    }
+
+    //ตรวจสอบว่าโต๊ะนี้-ในวันนี้-มีคนจองไปหรือยัง[ป้องกันการจองซ้ำ]
     const existingBooking = await prisma.booking.findFirst({
       where: {
         date: new Date(date),
@@ -24,10 +31,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // ถ้ายังไม่มีการจอง ให้บันทึกข้อมูล
+    //บันทึกลง[Database]
     const newBooking = await prisma.booking.create({
       data: {
-        customerName: name,
+        customerName: customerName,
         date: new Date(date),
         time: time,
         guests: Number(guests),
@@ -37,11 +44,12 @@ export async function POST(req: Request) {
     
     return NextResponse.json(newBooking, { status: 201 });
   } catch (error) {
+    console.error("Backend Error:", error);
     return NextResponse.json({ error: "บันทึกข้อมูลไม่สำเร็จ" }, { status: 500 });
   }
 }
 
-// 2. [READ] ดึงรายการทั้งหมดไปโชว์ที่ Dashboard
+//[GET]ดึงรายการจองทั้งหมด
 export async function GET() {
   try {
     const bookings = await prisma.booking.findMany({
@@ -53,27 +61,7 @@ export async function GET() {
   }
 }
 
-// 3. [UPDATE] แก้ไขเวลาหรือจำนวนคน
-export async function PATCH(req: Request) {
-  try {
-    const body = await req.json();
-    const { id, time, guests } = body;
-
-    const updatedBooking = await prisma.booking.update({
-      where: { id: Number(id) },
-      data: { 
-        time: time,
-        guests: Number(guests) 
-      },
-    });
-
-    return NextResponse.json(updatedBooking);
-  } catch (error) {
-    return NextResponse.json({ error: "แก้ไขข้อมูลไม่สำเร็จ" }, { status: 500 });
-  }
-}
-
-// 4. [DELETE] ยกเลิกการจอง
+//[DELETE]ลบรายการจอง-ใช้IDจากURL
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);

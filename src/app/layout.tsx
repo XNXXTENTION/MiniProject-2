@@ -4,7 +4,6 @@ import Link from 'next/link'
 import './globals.css'
 import AppQueryProvider from './provider'
 
-// 1. ตั้งค่าฟอนต์ Prompt เพื่อให้อ่านภาษาไทยได้สวยงาม
 const promptFont = Prompt({
   weight: ['300', '400', '500', '600', '700'],
   subsets: ['thai', 'latin'],
@@ -12,7 +11,6 @@ const promptFont = Prompt({
   variable: '--font-prompt',
 })
 
-// 2. ปรับปรุง Metadata ให้เข้ากับโปรเจกต์ร้านอาหาร (ม.พะเยา)
 export const metadata: Metadata = {
   title: {
     default: 'UP Restaurant | ระบบจองโต๊ะอาหารหน้า ม.พะเยา',
