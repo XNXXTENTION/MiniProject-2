@@ -1,6 +1,7 @@
+// schema.prisma
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql" // เปลี่ยนจาก sqlite เป็น postgresql
+  url      = env("DATABASE_URL") // ใช้ตัวแปร Environment แทนชื่อไฟล์
 }
 
 generator client {
