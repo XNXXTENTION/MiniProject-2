@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// ป้องกันการสร้าง Prisma Instance ซ้ำซ้อนในโหมด Development
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 // [GET] ดึงรายการจองทั้งหมด
 export async function GET() {
@@ -24,7 +27,7 @@ export async function POST(req: Request) {
     const newBooking = await prisma.booking.create({
       data: {
         customerName,
-        date: new Date(date),
+        date: new Date(date), // ตรวจสอบว่า date ไม่เป็นค่าว่าง
         time,
         guests: Number(guests),
         seatNumber,
@@ -33,11 +36,12 @@ export async function POST(req: Request) {
     
     return NextResponse.json(newBooking, { status: 201 });
   } catch (error) {
+    console.error("Post Error:", error); // เพิ่ม log เพื่อดูปัญหาบน Vercel
     return NextResponse.json({ error: "บันทึกไม่สำเร็จ" }, { status: 500 });
   }
 }
 
-// [PATCH] แก้ไขข้อมูล (จุดที่ต้องแก้ให้เป็น Number)
+// [PATCH] แก้ไขข้อมูล
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
@@ -47,7 +51,7 @@ export async function PATCH(req: Request) {
 
     const updatedBooking = await prisma.booking.update({
       where: { 
-        id: Number(id) // สำคัญมาก: ต้องแปลง ID เป็นตัวเลขตาม Schema ครับ
+        id: Number(id) 
       },
       data: {
         time: time,
@@ -72,7 +76,7 @@ export async function DELETE(req: Request) {
 
     await prisma.booking.delete({
       where: { 
-        id: Number(id) // สำคัญมาก: ต้องแปลง ID เป็นตัวเลขตาม Schema ครับ
+        id: Number(id) 
       },
     });
 
