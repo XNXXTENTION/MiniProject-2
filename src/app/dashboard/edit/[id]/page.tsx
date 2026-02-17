@@ -1,21 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react"; //
 import { useRouter, useParams } from "next/navigation";
 
-export default function EditBookingPage() {
+// 1. เพิ่ม force-dynamic เพื่อให้ Vercel ไม่ค้างตอน Build หน้าที่มี Dynamic Params
+
+
+function EditBookingContent() {
   const router = useRouter();
   const params = useParams();
   const [loading, setLoading] = useState(true);
-  const [bookedTimes, setBookedTimes] = useState<string[]>([]); // เก็บเวลาที่คนอื่นจองแล้ว
+  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
-    customerName: "", // เพิ่มชื่อมาโชว์ด้วยเพื่อให้รู้ว่าแก้ของใคร
+    customerName: "",
     time: "",
     guests: 1
   });
 
-  // รายการเวลาทั้งหมดที่ร้านเปิด (8:00 - 18:00)
   const allTimeSlots = [
     "08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00",
     "11:00 - 12:00", "12:00 - 13:00", "13:00 - 14:00",
@@ -29,7 +31,6 @@ export default function EditBookingPage() {
         const res = await fetch("/api/bookings");
         const allBookings = await res.json();
 
-        // 1. หาข้อมูลของรายการนี้มาแสดงในฟอร์ม
         const current = allBookings.find((b: any) => b.id === Number(params.id));
         if (current) {
           setFormData({
@@ -39,8 +40,6 @@ export default function EditBookingPage() {
           });
         }
 
-        // 2. หาว่าเวลาไหน "คนอื่น" จองไปแล้วบ้าง (ห้ามซ้ำ)
-        // กรองเอาแค่รายการที่ไม่ใช่ ID ปัจจุบันที่เรากำลังแก้อยู่
         const occupied = allBookings
           .filter((b: any) => b.id !== Number(params.id))
           .map((b: any) => b.time);
@@ -52,13 +51,12 @@ export default function EditBookingPage() {
         setLoading(false);
       }
     }
-    loadInitialData();
+    if (params.id) loadInitialData(); //
   }, [params.id]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check ซ้ำอีกรอบก่อนส่ง (เผื่อมีคนจองตัดหน้าตอนเราเปิดหน้านี้ทิ้งไว้)
     if (bookedTimes.includes(formData.time)) {
       alert("❌ เวลานี้ถูกจองไปแล้วโดยลูกค้ารายอื่น กรุณาเลือกเวลาใหม่");
       return;
@@ -98,8 +96,6 @@ export default function EditBookingPage() {
       </div>
       
       <form onSubmit={handleUpdate} className="bg-white p-8 shadow-2xl rounded-[2.5rem] border border-slate-100 space-y-8">
-        
-        {/* ส่วนเลือกเวลา */}
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-3 ml-1">🕒 เลือกช่วงเวลาใหม่:</label>
           <div className="grid grid-cols-1 gap-3">
@@ -121,7 +117,6 @@ export default function EditBookingPage() {
           <p className="mt-2 text-xs text-slate-400 ml-1">* เวลาที่ขึ้นว่า (เต็มแล้ว) จะไม่สามารถเลือกได้</p>
         </div>
 
-        {/* ส่วนแก้ไขจำนวนคน */}
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-3 ml-1">👥 แก้ไขจำนวนคน:</label>
           <div className="flex items-center gap-5 bg-slate-50 p-3 rounded-2xl border-2 border-slate-100">
@@ -139,7 +134,6 @@ export default function EditBookingPage() {
           </div>
         </div>
 
-        {/* ปุ่มจัดการ */}
         <div className="flex flex-col gap-3 pt-4">
           <button 
             type="submit" 
@@ -157,5 +151,14 @@ export default function EditBookingPage() {
         </div>
       </form>
     </main>
+  );
+}
+
+// 2. ใช้ Suspense ครอบตัว Content ไว้เพื่อให้ผ่านการตรวจของ Next.js Build
+export default function EditBookingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-prompt">กำลังเตรียมหน้าแก้ไข...</div>}>
+      <EditBookingContent />
+    </Suspense>
   );
 }
