@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-// ป้องกันการสร้าง Prisma Instance ซ้ำซ้อนในโหมด Development
+// ป้องกันการสร้าง Prisma Instance ซ้ำซ้อนในโหมด Development 1
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
