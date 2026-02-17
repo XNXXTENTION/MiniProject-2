@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 export default function DashboardPage() {
   const [bookings, setBookings] = useState([]);
 
-  //(GET)
   const fetchBookings = async () => {
     try {
       const res = await fetch("/api/bookings");
@@ -20,84 +19,132 @@ export default function DashboardPage() {
     fetchBookings();
   }, []);
 
-  //(PATCH)
-  const handleEdit = async (id: number, currentTime: string, currentGuests: number) => {
+  //(PATCH) พร้อมดักจับการกรอกจำนวนคนไม่ถูกต้อง
+  const handleEdit = async (id: number, bookingDate: string, currentTime: string, currentGuests: number) => {
     const newTime = prompt("ระบุเวลาใหม่ (เช่น 18:30):", currentTime);
-    const newGuests = prompt("ระบุจำนวนคนใหม่:", currentGuests.toString());
+    const newGuestsInput = prompt("ระบุจำนวนคนใหม่ (ต้องมากกว่า 0):", currentGuests.toString());
 
-    if (newTime && newGuests) {
-      const response = await fetch("/api/bookings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          id: id, 
-          time: newTime, 
-          guests: parseInt(newGuests) 
-        }),
-      });
+    // ตรวจสอบว่าผู้ใช้ไม่ได้กด Cancel และมีการกรอกข้อมูลมา
+    if (newTime && newGuestsInput !== null) {
+      const newGuests = parseInt(newGuestsInput);
 
-      if (response.ok) {
-        alert("✅ อัปเดตข้อมูลสำเร็จ!");
-        fetchBookings();
+      // --- ส่วนตรวจสอบจำนวนคน (Guests Validation) ---
+      if (isNaN(newGuests) || newGuests <= 0) {
+        alert("❌ จำนวนคนต้องมากกว่า 0 และเป็นตัวเลขเท่านั้นครับ");
+        return;
+      }
+
+      if (newGuests > 20) {
+        alert("❌ จำกัดจำนวนคนไม่เกิน 20 คนต่อหนึ่งการจองครับ");
+        return;
+      }
+
+      // --- ส่วนตรวจสอบเวลาย้อนหลัง (Date/Time Validation) ---
+      const now = new Date();
+      const selectedDate = new Date(bookingDate);
+      const todayAtMidnight = new Date();
+      todayAtMidnight.setHours(0, 0, 0, 0);
+      const compareDate = new Date(selectedDate);
+      compareDate.setHours(0, 0, 0, 0);
+
+      if (compareDate.getTime() === todayAtMidnight.getTime()) {
+        const [h, m] = newTime.split(":").map(Number);
+        const selectedTime = new Date();
+        selectedTime.setHours(h, m, 0, 0);
+
+        if (selectedTime <= now) {
+          alert(`❌ ไม่สามารถแก้ไขเป็นเวลา ${newTime} น. ได้ เนื่องจากผ่านมาแล้ว`);
+          return;
+        }
+      }
+
+      if (compareDate < todayAtMidnight) {
+        alert("❌ ไม่สามารถแก้ไขรายการจองที่ผ่านมาแล้วได้");
+        return;
+      }
+
+      // ส่งข้อมูลไปที่ API หลังจากผ่านการตรวจสอบทั้งหมด
+      try {
+        const response = await fetch("/api/bookings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            id: id, 
+            time: newTime, 
+            guests: newGuests 
+          }),
+        });
+
+        if (response.ok) {
+          alert("✅ อัปเดตข้อมูลสำเร็จ!");
+          fetchBookings();
+        } else {
+          alert("❌ เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+        }
+      } catch (error) {
+        alert("❌ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
       }
     }
   };
 
-  //(DELETE)
   const handleDelete = async (id: number) => {
     if (confirm("คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้?")) {
-      const response = await fetch(`/api/bookings?id=${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        alert("✅ ยกเลิกการจองสำเร็จ!");
-        fetchBookings();
+      try {
+        const response = await fetch(`/api/bookings?id=${id}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          alert("✅ ยกเลิกการจองสำเร็จ!");
+          fetchBookings();
+        }
+      } catch (error) {
+        alert("❌ เกิดข้อผิดพลาดในการลบข้อมูล");
       }
     }
   };
 
   return (
-    <main className="container mx-auto p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-blue-600">จัดการรายการจองโต๊ะ</h1>
+    <main className="container mx-auto p-8 font-prompt">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-blue-600">จัดการรายการจองโต๊ะ</h1>
+        <p className="text-slate-500 italic">Project by Patsapong</p>
       </div>
       
-      <div className="overflow-hidden bg-white shadow-xl rounded-2xl border border-slate-200">
+      <div className="overflow-hidden bg-white shadow-2xl rounded-3xl border border-slate-100">
         <table className="min-w-full table-auto">
-          <thead className="bg-slate-50 text-slate-700">
+          <thead className="bg-blue-600 text-white">
             <tr>
-              <th className="px-6 py-4 border-b text-left">ชื่อผู้จอง</th>
-              <th className="px-6 py-4 border-b text-left">โต๊ะ</th>
-              <th className="px-6 py-4 border-b text-left">วันที่/เวลา</th>
-              <th className="px-6 py-4 border-b text-center">คน</th>
-              <th className="px-6 py-4 border-b text-center">การจัดการ</th>
+              <th className="px-6 py-5 text-left font-semibold">ชื่อผู้จอง</th>
+              <th className="px-6 py-5 text-left font-semibold">เลขโต๊ะ</th>
+              <th className="px-6 py-5 text-left font-semibold">วันที่ | เวลา</th>
+              <th className="px-6 py-5 text-center font-semibold">จำนวนคน</th>
+              <th className="px-6 py-5 text-center font-semibold">การจัดการ</th>
             </tr>
           </thead>
           <tbody className="text-slate-600 divide-y divide-slate-100">
             {bookings.length > 0 ? (
               bookings.map((item: any) => (
-                <tr key={item.id} className="hover:bg-blue-50/50 transition-colors">
+                <tr key={item.id} className="hover:bg-blue-50/40 transition-all">
                   <td className="px-6 py-4 font-medium text-slate-900">{item.customerName}</td>
                   <td className="px-6 py-4">
-                    <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded-md font-bold">
+                    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold text-sm">
                       {item.seatNumber}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    {new Date(item.date).toLocaleDateString('th-TH')} | {item.time}
+                    {new Date(item.date).toLocaleDateString('th-TH')} | <span className="text-blue-600 font-semibold">{item.time} น.</span>
                   </td>
-                  <td className="px-6 py-4 text-center">{item.guests}</td>
+                  <td className="px-6 py-4 text-center font-bold text-slate-800">{item.guests}</td>
                   <td className="px-6 py-4 text-center">
                     <button 
-                      onClick={() => handleEdit(item.id, item.time, item.guests)}
-                      className="text-amber-600 hover:text-amber-700 font-semibold mr-4"
+                      onClick={() => handleEdit(item.id, item.date, item.time, item.guests)}
+                      className="bg-amber-100 text-amber-600 px-4 py-2 rounded-xl hover:bg-amber-200 transition-colors mr-2 text-sm font-bold"
                     >
                       แก้ไข
                     </button>
                     <button 
                       onClick={() => handleDelete(item.id)}
-                      className="text-red-500 hover:text-red-700 font-semibold"
+                      className="bg-red-100 text-red-500 px-4 py-2 rounded-xl hover:bg-red-200 transition-colors text-sm font-bold"
                     >
                       ยกเลิก
                     </button>
@@ -106,7 +153,7 @@ export default function DashboardPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
+                <td colSpan={5} className="px-6 py-20 text-center text-slate-400">
                   ไม่มีรายการจองในขณะนี้
                 </td>
               </tr>

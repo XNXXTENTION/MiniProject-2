@@ -3,53 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-//[POST]บันทึกข้อมูลการจองใหม่
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    
-    //ดึงค่าโดยใช้ชื่อ[customerName]ให้ตรงกับหน้าบ้านและ[Schema]
-    const { customerName, date, time, guests, seatNumber } = body;
-
-    //ตรวจสอบเบื้องต้นว่ามีข้อมูลครบไหม
-    if (!customerName || !date || !seatNumber) {
-      return NextResponse.json({ error: "❌ ข้อมูลไม่ครบถ้วน" }, { status: 400 });
-    }
-
-    //ตรวจสอบว่าโต๊ะนี้-ในวันนี้-มีคนจองไปหรือยัง[ป้องกันการจองซ้ำ]
-    const existingBooking = await prisma.booking.findFirst({
-      where: {
-        date: new Date(date),
-        seatNumber: seatNumber,
-      },
-    });
-
-    if (existingBooking) {
-      return NextResponse.json(
-        { error: "❌ ที่นั่งนี้ถูกจองไปแล้วในวันที่ระบุ" }, 
-        { status: 400 }
-      );
-    }
-
-    //บันทึกลง[Database]
-    const newBooking = await prisma.booking.create({
-      data: {
-        customerName: customerName,
-        date: new Date(date),
-        time: time,
-        guests: Number(guests),
-        seatNumber: seatNumber,
-      },
-    });
-    
-    return NextResponse.json(newBooking, { status: 201 });
-  } catch (error) {
-    console.error("Backend Error:", error);
-    return NextResponse.json({ error: "บันทึกข้อมูลไม่สำเร็จ" }, { status: 500 });
-  }
-}
-
-//[GET]ดึงรายการจองทั้งหมด
+// [GET] ดึงรายการจองทั้งหมด
 export async function GET() {
   try {
     const bookings = await prisma.booking.findMany({
@@ -61,7 +15,54 @@ export async function GET() {
   }
 }
 
-//[DELETE]ลบรายการจอง-ใช้IDจากURL
+// [POST] บันทึกข้อมูลการจองใหม่
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { customerName, date, time, guests, seatNumber } = body;
+
+    const newBooking = await prisma.booking.create({
+      data: {
+        customerName,
+        date: new Date(date),
+        time,
+        guests: Number(guests),
+        seatNumber,
+      },
+    });
+    
+    return NextResponse.json(newBooking, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: "บันทึกไม่สำเร็จ" }, { status: 500 });
+  }
+}
+
+// [PATCH] แก้ไขข้อมูล (จุดที่ต้องแก้ให้เป็น Number)
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, time, guests } = body;
+
+    if (!id) return NextResponse.json({ error: "ต้องระบุ ID" }, { status: 400 });
+
+    const updatedBooking = await prisma.booking.update({
+      where: { 
+        id: Number(id) // สำคัญมาก: ต้องแปลง ID เป็นตัวเลขตาม Schema ครับ
+      },
+      data: {
+        time: time,
+        guests: Number(guests),
+      },
+    });
+
+    return NextResponse.json(updatedBooking);
+  } catch (error) {
+    console.error("Update Error:", error);
+    return NextResponse.json({ error: "ไม่สามารถอัปเดตได้" }, { status: 500 });
+  }
+}
+
+// [DELETE] ลบรายการจอง
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -70,7 +71,9 @@ export async function DELETE(req: Request) {
     if (!id) return NextResponse.json({ error: "ต้องระบุ ID" }, { status: 400 });
 
     await prisma.booking.delete({
-      where: { id: Number(id) },
+      where: { 
+        id: Number(id) // สำคัญมาก: ต้องแปลง ID เป็นตัวเลขตาม Schema ครับ
+      },
     });
 
     return NextResponse.json({ message: "ลบรายการสำเร็จ" });
