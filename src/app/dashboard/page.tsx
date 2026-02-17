@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true); // เพิ่มสถานะการโหลด
   const router = useRouter();
 
   const fetchBookings = async () => {
     try {
+      setLoading(true);
       const res = await fetch("/api/bookings");
+      if (!res.ok) throw new Error("ดึงข้อมูลไม่สำเร็จ");
+      
       const data = await res.json();
       
       // เรียงลำดับ: เอาเวลาเช้าสุด (เช่น 08:00) ขึ้นก่อน
@@ -18,6 +22,8 @@ export default function DashboardPage() {
       setBookings(sortedData);
     } catch (error) {
       console.error("Error fetching bookings:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -32,9 +38,11 @@ export default function DashboardPage() {
         if (response.ok) {
           alert("✅ ยกเลิกสำเร็จ!");
           fetchBookings();
+        } else {
+          alert("❌ ไม่สามารถลบข้อมูลได้");
         }
       } catch (error) {
-        alert("❌ เกิดข้อผิดพลาด");
+        alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ");
       }
     }
   };
@@ -46,7 +54,15 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold text-blue-600">รายการจองวันนี้</h1>
           <p className="text-slate-400">เรียงตามลำดับเวลาเช้า - เย็น</p>
         </div>
-        <p className="text-slate-500 italic">Project by Patsapong</p>
+        <div className="text-right">
+          <p className="text-slate-500 italic">Project by Patsapong</p>
+          <button 
+            onClick={() => router.push("/booking")} 
+            className="mt-2 text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            + เพิ่มการจองใหม่
+          </button>
+        </div>
       </div>
       
       <div className="overflow-hidden bg-white shadow-2xl rounded-3xl border border-slate-100">
@@ -60,7 +76,9 @@ export default function DashboardPage() {
             </tr>
           </thead>
           <tbody className="text-slate-600 divide-y divide-slate-100">
-            {bookings.length > 0 ? (
+            {loading ? (
+              <tr><td colSpan={4} className="px-6 py-20 text-center text-blue-500 animate-pulse">กำลังโหลดข้อมูลการจอง...</td></tr>
+            ) : bookings.length > 0 ? (
               bookings.map((item: any) => (
                 <tr key={item.id} className="hover:bg-blue-50/40 transition-all">
                   <td className="px-6 py-4 font-bold text-slate-900">{item.customerName}</td>
@@ -72,8 +90,13 @@ export default function DashboardPage() {
                   <td className="px-6 py-4 text-center font-bold">{item.guests} คน</td>
                   <td className="px-6 py-4 text-center">
                     <button 
-                      // เปลี่ยนจากการใช้ prompt เป็นการไปหน้าแก้ไข
-                      onClick={() => router.push(`/dashboard/edit/${item.id}`)}
+                      onClick={() => {
+                        if (item.id) {
+                          router.push(`/dashboard/edit/${item.id}`);
+                        } else {
+                          alert("ไม่พบ ID ของรายการนี้");
+                        }
+                      }}
                       className="bg-amber-100 text-amber-600 px-4 py-2 rounded-xl hover:bg-amber-200 transition-colors mr-2 font-bold"
                     >
                       แก้ไข
