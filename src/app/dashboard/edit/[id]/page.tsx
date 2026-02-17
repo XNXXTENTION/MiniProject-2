@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react"; //
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useParams } from "next/navigation";
-
-// 1. เพิ่ม force-dynamic เพื่อให้ Vercel ไม่ค้างตอน Build หน้าที่มี Dynamic Params
-
 
 function EditBookingContent() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams(); // ดึง ID จาก URL
   const [loading, setLoading] = useState(true);
   const [bookedTimes, setBookedTimes] = useState<string[]>([]);
   
@@ -31,7 +28,10 @@ function EditBookingContent() {
         const res = await fetch("/api/bookings");
         const allBookings = await res.json();
 
-        const current = allBookings.find((b: any) => b.id === Number(params.id));
+        // สำคัญ: params.id ต้องถูกแปลงเป็น Number ให้ตรงกับ Database
+        const currentId = Number(params?.id);
+        const current = allBookings.find((b: any) => b.id === currentId);
+        
         if (current) {
           setFormData({
             customerName: current.customerName,
@@ -41,7 +41,7 @@ function EditBookingContent() {
         }
 
         const occupied = allBookings
-          .filter((b: any) => b.id !== Number(params.id))
+          .filter((b: any) => b.id !== currentId)
           .map((b: any) => b.time);
         
         setBookedTimes(occupied);
@@ -51,12 +51,19 @@ function EditBookingContent() {
         setLoading(false);
       }
     }
-    if (params.id) loadInitialData(); //
-  }, [params.id]);
+    if (params?.id) loadInitialData();
+  }, [params?.id]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // ตรวจสอบ ID ก่อนส่ง
+    const idToSend = Number(params?.id);
+    if (!idToSend) {
+      alert("❌ ไม่พบรหัสการจอง (ID is missing)");
+      return;
+    }
+
     if (bookedTimes.includes(formData.time)) {
       alert("❌ เวลานี้ถูกจองไปแล้วโดยลูกค้ารายอื่น กรุณาเลือกเวลาใหม่");
       return;
@@ -67,15 +74,18 @@ function EditBookingContent() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          id: params.id, 
+          id: idToSend, // ส่ง ID เป็นตัวเลขไปให้ API
           time: formData.time, 
-          guests: formData.guests 
+          guests: Number(formData.guests) 
         }),
       });
 
       if (response.ok) {
         alert("✅ แก้ไขข้อมูลสำเร็จ!");
         router.push("/dashboard");
+      } else {
+        const errorData = await response.json();
+        alert(`❌ แก้ไขไม่สำเร็จ: ${errorData.error}`);
       }
     } catch (error) {
       alert("❌ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
@@ -92,29 +102,29 @@ function EditBookingContent() {
     <main className="container mx-auto p-8 max-w-lg font-prompt">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-blue-600">แก้ไขการจอง</h1>
-        <p className="text-slate-500">ของลูกค้าคุณ: <span className="font-bold text-slate-800">{formData.customerName}</span></p>
+        <p className="text-slate-500 font-bold">ID รายการ: {params?.id}</p>
+        <p className="text-slate-500">ลูกค้า: <span className="font-bold text-slate-800">{formData.customerName}</span></p>
       </div>
       
       <form onSubmit={handleUpdate} className="bg-white p-8 shadow-2xl rounded-[2.5rem] border border-slate-100 space-y-8">
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-3 ml-1">🕒 เลือกช่วงเวลาใหม่:</label>
-          <div className="grid grid-cols-1 gap-3">
-            <select 
-              value={formData.time}
-              onChange={(e) => setFormData({...formData, time: e.target.value})}
-              className="w-full border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 bg-slate-50 font-bold text-blue-700"
-            >
-              {allTimeSlots.map((slot) => {
-                const isTaken = bookedTimes.includes(slot);
-                return (
-                  <option key={slot} value={slot} disabled={isTaken}>
-                    {slot} น. {isTaken ? "(เต็มแล้ว)" : ""}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-          <p className="mt-2 text-xs text-slate-400 ml-1">* เวลาที่ขึ้นว่า (เต็มแล้ว) จะไม่สามารถเลือกได้</p>
+          <select 
+            value={formData.time}
+            onChange={(e) => setFormData({...formData, time: e.target.value})}
+            className="w-full border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-blue-500 bg-slate-50 font-bold text-blue-700"
+            required
+          >
+            <option value="" disabled>กรุณาเลือกเวลา</option>
+            {allTimeSlots.map((slot) => {
+              const isTaken = bookedTimes.includes(slot);
+              return (
+                <option key={slot} value={slot} disabled={isTaken}>
+                  {slot} น. {isTaken ? "(เต็มแล้ว)" : ""}
+                </option>
+              );
+            })}
+          </select>
         </div>
 
         <div>
@@ -154,10 +164,9 @@ function EditBookingContent() {
   );
 }
 
-// 2. ใช้ Suspense ครอบตัว Content ไว้เพื่อให้ผ่านการตรวจของ Next.js Build
 export default function EditBookingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-prompt">กำลังเตรียมหน้าแก้ไข...</div>}>
+    <Suspense fallback={<div>Loading...</div>}>
       <EditBookingContent />
     </Suspense>
   );
