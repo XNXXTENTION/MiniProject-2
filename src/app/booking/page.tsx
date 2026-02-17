@@ -7,144 +7,132 @@ function BookingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  //แปลค่า[URL]จากหน้า[seats]จากที่แล้วมาเก็บใน[seatFromUrl]
-  const seatFromUrl = searchParams.get("seat") || ""; 
+  // 1. ดึงค่าเวลาที่เลือกมาจาก URL
+  const timeFromUrl = searchParams.get("time") || ""; 
 
-  //สร้างเก็บข้อมูลให้ชื่อตรงกับ[Database]เก็บค่าที่กรอก
+  // 2. จัดการเรื่องวันที่ (Default เป็นวันนี้)
+  const today = new Date().toISOString().split('T')[0];
+
   const [formData, setFormData] = useState({
     customerName: "",
-    date: "",
-    time: "",
-    guests: 1,
-    seatNumber: seatFromUrl,
+    date: today,      // ตั้งเป็นวันนี้อัตโนมัติ
+    time: timeFromUrl, // ดึงจากหน้าเลือกเวลา
+    guests: 1,         // ค่าเริ่มต้น 1 คน
+    seatNumber: "Auto-Assign", // หรือจะใส่เป็น Time Slot แทนก็ได้ครับ
   });
 
-  //ถ้า[URL]เปลี่ยนกดเลือกโต๊ะใหม่ให้รีบอัปเดตค่าในฟอร์มทันที
-  //ชื่อโต๊ะอาจมาช้ากว่าเข้าเว็บ
+  // อัปเดตค่าเวลาเมื่อ URL เปลี่ยน
   useEffect(() => {
-    if (seatFromUrl) {
-      setFormData((prev) => ({ ...prev, seatNumber: seatFromUrl }));
+    if (timeFromUrl) {
+      setFormData((prev) => ({ ...prev, time: timeFromUrl }));
     }
-  }, [seatFromUrl]);
+  }, [timeFromUrl]);
 
   const handleBooking = async (e: React.FormEvent) => {
-    e.preventDefault();// ป้องกันไม่ให้หน้าเว็บ Refresh เอง
+    e.preventDefault();
 
-    //ตรวจสอบวันที่ห้ามจองย้อนหลัง
-    const now = new Date();// เวลาปัจจุบัน (รวมชั่วโมง/นาที)
-    const selectedDate = new Date(formData.date); //เปลี่ยนคอมพิวเตอร์สามารถคำนวณและเปรียบเทียบได้ครับ
-    const todayAtMidnight = new Date();//กำหนกให้เที่ยงคือเพราะเวลาน้อยที่สุด
-
-    todayAtMidnight.setHours(0, 0, 0, 0);
-    selectedDate.setHours(0, 0, 0, 0);//กำหนกให้เที่ยงคือเพราะเวลาน้อยที่สุด
-
-    if (selectedDate < todayAtMidnight) {
-      alert("❌ ไม่สามารถจองวันที่ย้อนหลังได้");
+    if (!formData.customerName.trim()) {
+      alert("⚠️ กรุณากรอกชื่อผู้จองด้วยครับ");
       return;
     }
 
-    if (selectedDate.getTime() === todayAtMidnight.getTime()) {//เลือกวันนี้ไหม
-      const [h, m] = formData.time.split(":").map(Number);//แปลงเป็น"ชั่วโมง"และ"นาที"[16:30]และจะเปลี่ยนพวกมันให้กลายเป็นตัวเลขเพื่อเอาไปคำนวณครับ
-      const selectedTime = new Date();
-      selectedTime.setHours(h, m, 0, 0);//ตั้งเวลาให้ตรงกับที่ากรอกมา
-
-      if (selectedTime < now) {
-        alert("❌ เวลาปัจจุบันคือ " + now.toLocaleTimeString() + " คุณเลือกเวลาที่ผ่านมาแล้ว!");
-        return;
-      }
-    }
-
-    //ส่งข้อมูลไปยัง[API]
     try {
       const response = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),//แปลงก้อนข้อมูลให้กลายเป็น[String]ส่งไป[Server]
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
-        alert("✅ จองโต๊ะสำเร็จ!");
-        router.push("/dashboard");//จองเสร็จแล้วพาไปหน้าดูรายการจองทั้งหมด
+        alert("✅ จองสำเร็จเรียบร้อย!");
+        router.push("/dashboard");
       } else {
         const result = await response.json();
         alert(`❌ ผิดพลาด: ${result.error || "จองไม่ได้"}`);
       }
     } catch (error) {
-      alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+      alert("❌ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
     }
   };
 
   return (
-    <main className="container mx-auto p-8 max-w-md">
-      <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">ระบุข้อมูลการจอง</h1>
+    <main className="container mx-auto p-8 max-w-md font-prompt">
+      <h1 className="text-3xl font-bold text-center text-blue-600 mb-2">สรุปรายการจอง</h1>
+      <p className="text-center text-slate-400 mb-8 italic">Project by Patsapong</p>
       
-      <form onSubmit={handleBooking} className="bg-white p-8 shadow-xl rounded-2xl border border-slate-100 space-y-4">
-        {/* แสดงเลขโต๊ะที่เลือกมา[แก้ไขไม่ได้]*/}
-        <div className="bg-blue-50 p-3 rounded-lg text-center">
-          <span className="text-slate-600">เลขโต๊ะที่เลือก: </span>
-          <span className="font-bold text-blue-700 text-xl">{formData.seatNumber || "ยังไม่ได้เลือก"}</span>
+      <form onSubmit={handleBooking} className="bg-white p-8 shadow-2xl rounded-[2rem] border border-slate-100 space-y-6">
+        
+        {/* ส่วนแสดงข้อมูลที่เลือกมาแล้ว (ReadOnly) */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center bg-blue-50 p-4 rounded-2xl">
+            <span className="text-slate-500">ช่วงเวลา</span>
+            <span className="font-bold text-blue-700">{formData.time || "ไม่ได้ระบุ"}</span>
+          </div>
+          
+          <div className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
+            <span className="text-slate-500">วันที่จอง</span>
+            <span className="font-bold text-slate-700">{new Date(formData.date).toLocaleDateString('th-TH')}</span>
+          </div>
         </div>
 
-        {/*ชื่อผู้จอง*/}
+        <hr className="border-slate-100" />
+
+        {/* ส่วนที่ลูกค้าต้องกรอก: ชื่อ */}
         <div>
-          <label className="block text-sm font-semibold mb-1">ชื่อลูกค้า:</label>
+          <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">
+            👤 ชื่อผู้จอง <span className="text-red-500">*</span>
+          </label>
           <input 
             type="text" 
-            className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-            //onChangeดูทุกครั้งทีพิมพ์
-            //...คือcopyข้อมูล
+            placeholder="กรอกชื่อ-นามสกุล ของคุณ"
+            className="w-full border-2 border-slate-100 p-4 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-lg"
+            value={formData.customerName}
             onChange={(e) => setFormData({...formData, customerName: e.target.value})} 
             required 
+            autoFocus
           />
         </div>
 
-        {/*วันที่*/}
+        {/* จำนวนคน (สามารถกดเลือกได้ง่ายๆ) */}
         <div>
-          <label className="block text-sm font-semibold mb-1">วันที่จอง:</label>
-          <input 
-            type="date" 
-            className="w-full border p-3 rounded-xl"
-            onChange={(e) => setFormData({...formData, date: e.target.value})} 
-            required 
-          />
+          <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">👥 จำนวนคน</label>
+          <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl">
+            <button 
+              type="button"
+              onClick={() => setFormData(prev => ({...prev, guests: Math.max(1, prev.guests - 1)}))}
+              className="w-12 h-12 bg-white rounded-xl shadow-sm text-xl font-bold hover:bg-red-50 hover:text-red-500 transition-colors"
+            > - </button>
+            <span className="flex-1 text-center font-bold text-xl">{formData.guests}</span>
+            <button 
+              type="button"
+              onClick={() => setFormData(prev => ({...prev, guests: Math.min(20, prev.guests + 1)}))}
+              className="w-12 h-12 bg-white rounded-xl shadow-sm text-xl font-bold hover:bg-green-50 hover:text-green-500 transition-colors"
+            > + </button>
+          </div>
         </div>
 
-        {/*เวลา*/}
-        <div>
-          <label className="block text-sm font-semibold mb-1">เวลาที่จอง:</label>
-          <input 
-            type="time" 
-            className="w-full border p-3 rounded-xl"
-            onChange={(e) => setFormData({...formData, time: e.target.value})} 
-            required 
-          />
-        </div>
+        <button 
+          type="submit" 
+          className="w-full bg-blue-600 text-white font-bold py-5 rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200 text-lg"
+        >
+          ยืนยันการจองทันที 🚀
+        </button>
 
-        {/*จำนวนคน*/}
-        <div>
-          <label className="block text-sm font-semibold mb-1">จำนวน (คน):</label>
-          <input 
-            type="number" 
-            min="1" max="20"
-            value={formData.guests}
-            className="w-full border p-3 rounded-xl"
-            onChange={(e) => setFormData({...formData, guests: parseInt(e.target.value)})} 
-            required 
-          />
-        </div>
-
-        <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-transform active:scale-95 shadow-lg">
-          ยืนยันการจองโต๊ะ {formData.seatNumber}
+        <button 
+          type="button"
+          onClick={() => router.back()}
+          className="w-full text-slate-400 font-medium py-2 hover:text-slate-600 transition-colors"
+        >
+          ย้อนกลับไปเปลี่ยนเวลา
         </button>
       </form>
     </main>
   );
 }
 
-//ใช้[Suspense]ครอบตามมาตรฐาน[Next.js]เพื่อให้อ่านค่าจาก[URL]ได้ถูกต้อง
 export default function BookingPage() {
   return (
-    <Suspense fallback={<div className="text-center p-10 font-bold">กำลังโหลดฟอร์ม...</div>}>
+    <Suspense fallback={<div className="text-center p-20 font-bold text-blue-600 animate-pulse">กำลังเตรียมข้อมูลการจอง...</div>}>
       <BookingForm />
     </Suspense>
   );
